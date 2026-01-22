@@ -1,0 +1,3253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#08080a">
+  <title>The Accidental CTO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    html, body {
+      height: 100%;
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: #08080a;
+      overflow: hidden;
+    }
+
+    /* ============ DARK BEAMS BACKGROUND ============ */
+    .bg {
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120,119,198,0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 50%, rgba(78,78,130,0.1), transparent),
+        radial-gradient(ellipse 60% 40% at 20% 80%, rgba(78,78,130,0.08), transparent);
+    }
+
+    .bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 100px,
+        rgba(255,255,255,0.01) 100px,
+        rgba(255,255,255,0.01) 101px
+      );
+    }
+
+    /* Grain */
+    .grain {
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ============ START SCREEN ============ */
+    .start-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 150;
+      background: #08080a;
+      cursor: pointer;
+      transition: opacity 0.8s ease, visibility 0.8s;
+    }
+
+    .start-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .start-content {
+      text-align: center;
+    }
+
+    .start-content h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(32px, 6vw, 56px);
+      font-weight: 400;
+      font-style: italic;
+      color: #fff;
+      margin-bottom: 8px;
+      opacity: 0;
+      animation: startFadeIn 1s ease forwards 0.3s;
+    }
+
+    .start-content h1 span {
+      color: rgba(255,200,120,1);
+    }
+
+    .start-hint {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 40px;
+      opacity: 0;
+      animation: startFadeIn 1s ease forwards 0.8s, startPulse 2s ease-in-out infinite 1.8s;
+    }
+
+    .start-hint span {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: rgba(255,200,120,0.6);
+      border-radius: 50%;
+      margin-right: 10px;
+      animation: startDot 2s ease-in-out infinite 1.8s;
+    }
+
+    @keyframes startFadeIn {
+      to { opacity: 1; }
+    }
+
+    @keyframes startPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes startDot {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.3); opacity: 1; }
+    }
+
+    /* ============ HOLLYWOOD INTRO ============ */
+    .intro {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      background: #08080a;
+      overflow: visible;
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .intro.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .intro.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 1s ease-out, visibility 1s;
+    }
+
+    /* Cinematic bars - hidden for full screen effect */
+    .cinema-bar {
+      display: none;
+    }
+
+    /* Ambient glow */
+    .ambient-glow {
+      position: absolute;
+      width: 150%;
+      height: 150%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(ellipse at center, rgba(255,180,100,0.08) 0%, transparent 50%);
+      opacity: 0;
+    }
+
+    /* Cinematic light rays */
+    .light-rays {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 400%;
+      height: 400%;
+      transform: translate(-50%, -50%);
+      min-width: 100vw;
+      min-height: 100vh;
+      background: conic-gradient(from 0deg at 50% 50%,
+        transparent 0deg,
+        rgba(255,200,120,0.04) 5deg,
+        transparent 10deg,
+        rgba(255,200,120,0.02) 25deg,
+        transparent 30deg,
+        rgba(255,200,120,0.05) 45deg,
+        transparent 55deg,
+        rgba(255,200,120,0.03) 70deg,
+        transparent 80deg,
+        rgba(255,200,120,0.04) 95deg,
+        transparent 105deg,
+        rgba(255,200,120,0.02) 120deg,
+        transparent 130deg,
+        rgba(255,200,120,0.05) 145deg,
+        transparent 155deg,
+        rgba(255,200,120,0.03) 170deg,
+        transparent 180deg,
+        rgba(255,200,120,0.04) 195deg,
+        transparent 205deg,
+        rgba(255,200,120,0.02) 220deg,
+        transparent 230deg,
+        rgba(255,200,120,0.05) 245deg,
+        transparent 255deg,
+        rgba(255,200,120,0.03) 270deg,
+        transparent 280deg,
+        rgba(255,200,120,0.04) 295deg,
+        transparent 305deg,
+        rgba(255,200,120,0.02) 320deg,
+        transparent 330deg,
+        rgba(255,200,120,0.05) 345deg,
+        transparent 360deg
+      );
+      opacity: 0;
+      animation: rays-rotate 60s linear infinite;
+    }
+
+    @keyframes rays-rotate {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* Floating particles */
+    .particles {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      background: rgba(255,200,120,0.8);
+      border-radius: 50%;
+      opacity: 0;
+      box-shadow: 0 0 6px rgba(255,200,120,0.5);
+    }
+
+    /* Vignette */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 0%, transparent 30%, rgba(0,0,0,0.9) 100%);
+      pointer-events: none;
+    }
+
+    /* Author photo */
+    .author-photo-container {
+      position: relative;
+      z-index: 10;
+      margin-bottom: 30px;
+      opacity: 0;
+      transform: scale(0.8);
+    }
+
+    .author-photo {
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid rgba(255,200,120,0.3);
+      box-shadow:
+        0 0 80px rgba(255,200,120,0.3),
+        0 0 160px rgba(255,200,120,0.15),
+        0 30px 80px rgba(0,0,0,0.5);
+    }
+
+    .author-photo-ring {
+      position: absolute;
+      inset: -20px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,200,120,0.2);
+      animation: ring-pulse 3s ease-in-out infinite;
+    }
+
+    .author-photo-ring-2 {
+      position: absolute;
+      inset: -50px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,200,120,0.1);
+      animation: ring-pulse 3s ease-in-out infinite 0.5s;
+    }
+
+    @keyframes ring-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.05); opacity: 1; }
+    }
+
+    /* Title container */
+    .intro-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      transform: translateY(20px);
+    }
+
+    .intro-presents {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 40px;
+      opacity: 0;
+    }
+
+    .intro-subtitle {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: rgba(255,200,120,0.9);
+      margin-bottom: 16px;
+      opacity: 0;
+    }
+
+    .intro-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(42px, 8vw, 90px);
+      font-weight: 400;
+      font-style: italic;
+      color: #fff;
+      line-height: 1.05;
+      opacity: 0;
+      text-shadow:
+        0 0 60px rgba(255,200,120,0.4),
+        0 0 120px rgba(255,200,120,0.2);
+    }
+
+    .intro-title span {
+      display: block;
+    }
+
+    .intro-title .title-the {
+      font-size: 0.5em;
+      font-style: normal;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 5px;
+    }
+
+    .intro-title .title-accidental {
+      font-weight: 400;
+      background: linear-gradient(180deg, #fff 0%, rgba(255,220,180,0.9) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .intro-title .title-cto {
+      font-size: 1.1em;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      background: linear-gradient(180deg, rgba(255,220,180,1) 0%, rgba(255,180,100,0.9) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .intro-author {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 0.25em;
+      color: rgba(255,255,255,0.6);
+      margin-top: 24px;
+      opacity: 0;
+    }
+
+    .intro-author-name {
+      color: rgba(255,200,120,0.9);
+      font-weight: 500;
+    }
+
+    .intro-line {
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,200,120,0.6), transparent);
+      margin: 20px auto;
+      opacity: 0;
+      transform: scaleX(0);
+    }
+
+    /* Lens flares */
+    .lens-flare {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+      mix-blend-mode: screen;
+    }
+
+    .flare-1 {
+      width: 400px;
+      height: 400px;
+      top: 15%;
+      left: 25%;
+      background: radial-gradient(circle, rgba(255,200,120,0.2) 0%, rgba(255,150,50,0.1) 30%, transparent 70%);
+      filter: blur(30px);
+    }
+
+    .flare-2 {
+      width: 250px;
+      height: 250px;
+      top: 55%;
+      right: 15%;
+      background: radial-gradient(circle, rgba(255,220,150,0.15) 0%, transparent 60%);
+      filter: blur(20px);
+    }
+
+    .flare-3 {
+      width: 150px;
+      height: 150px;
+      top: 30%;
+      right: 35%;
+      background: radial-gradient(circle, rgba(255,255,200,0.2) 0%, transparent 50%);
+      filter: blur(15px);
+    }
+
+    /* Horizontal flare streak */
+    .flare-streak {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,200,120,0.1) 20%,
+        rgba(255,200,120,0.4) 50%,
+        rgba(255,200,120,0.1) 80%,
+        transparent 100%
+      );
+      transform: translateY(-50%);
+      opacity: 0;
+      filter: blur(1px);
+    }
+
+    /* Bokeh circles */
+    .bokeh {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,200,120,0.3) 0%, transparent 70%);
+      opacity: 0;
+    }
+
+    #fileInput { display: none; }
+
+    /* ============ READER ============ */
+    .reader {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s, visibility 0.5s;
+    }
+
+    .reader.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* ============ BOOK - Standard 6x9 ratio ============ */
+    .book-container {
+      perspective: 2000px;
+    }
+
+    .book {
+      position: relative;
+      display: flex;
+      /* Standard trade paperback ratio 6:9 = 2:3, spread is 12:9 = 4:3 */
+      width: min(1200px, 90vw);
+      height: min(675px, 80vh);
+      transform-style: preserve-3d;
+      transform: rotateX(2deg);
+    }
+
+    /* Spine */
+    .spine {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 20px;
+      transform: translateX(-50%) translateZ(-8px);
+      background: linear-gradient(90deg,
+        #1c1917 0%, #292524 20%, #1c1917 40%,
+        #292524 60%, #1c1917 80%, #292524 100%
+      );
+      box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    }
+
+    /* Pages */
+    .page {
+      position: relative;
+      width: 50%;
+      height: 100%;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .page-left {
+      border-radius: 4px 0 0 4px;
+      box-shadow:
+        inset -1px 0 0 #e8e4dc,
+        inset -40px 0 60px -40px rgba(0,0,0,0.06),
+        -4px 0 20px rgba(0,0,0,0.12);
+    }
+
+    .page-right {
+      border-radius: 0 4px 4px 0;
+      box-shadow:
+        inset 1px 0 0 #e8e4dc,
+        inset 40px 0 60px -40px rgba(0,0,0,0.06),
+        4px 0 20px rgba(0,0,0,0.12);
+    }
+
+    /* Page stack edges */
+    .page-left::before {
+      content: '';
+      position: absolute;
+      left: -10px;
+      top: 3px;
+      bottom: 3px;
+      width: 10px;
+      background: linear-gradient(to left, #f5f2ea, #e8e4dc);
+      border-radius: 2px 0 0 2px;
+    }
+
+    .page-right::before {
+      content: '';
+      position: absolute;
+      right: -10px;
+      top: 3px;
+      bottom: 3px;
+      width: 10px;
+      background: linear-gradient(to right, #f5f2ea, #e8e4dc);
+      border-radius: 0 2px 2px 0;
+    }
+
+    /* ============ PAGE CONTENT ============ */
+    .page-inner {
+      position: absolute;
+      inset: 0;
+      padding: 40px 48px;
+      padding-bottom: 50px;
+      overflow: hidden;
+    }
+
+    .page-inner > *:first-child {
+      margin-top: 0 !important;
+    }
+
+    .page-inner > *:last-child {
+      margin-bottom: 0 !important;
+    }
+
+    /* Typography - HIGH CONTRAST for readability */
+    .page-inner h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 700;
+      font-style: italic;
+      color: #000;
+      margin-bottom: 12px;
+      margin-top: 24px;
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    /* First h1 on a page - chapter opener style */
+    .page-inner > h1:first-child {
+      margin-top: 40px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .page-inner h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+      margin: 16px 0 8px;
+      line-height: 1.3;
+    }
+
+    .page-inner h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #000;
+      margin: 12px 0 6px;
+    }
+
+    .page-inner h6 {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 12px;
+    }
+
+    .page-inner h6 a {
+      color: #8b4513;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .page-inner p {
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      text-align: justify;
+      hyphens: auto;
+      font-weight: 400;
+      text-indent: 0;
+    }
+
+    /* Drop cap for first paragraph after chapter title */
+    .page-inner > h1:first-child + p::first-letter,
+    .page-inner > h1:first-child + h3 + p::first-letter {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.8em;
+      float: left;
+      line-height: 0.85;
+      margin-right: 6px;
+      margin-top: 2px;
+      color: #000;
+      font-weight: 600;
+    }
+
+    .page-inner ul, .page-inner ol {
+      margin: 8px 0 8px 18px;
+      font-size: 13px;
+      line-height: 1.65;
+      color: #1a1a1a;
+    }
+
+    .page-inner li { margin-bottom: 4px; }
+
+    .page-inner blockquote {
+      margin: 10px 0;
+      padding: 10px 16px;
+      border-left: 3px solid #8b4513;
+      background: rgba(139,69,19,0.03);
+      font-style: italic;
+      font-size: 13px;
+      color: #333;
+    }
+
+    .page-inner code {
+      font-family: 'SF Mono', Consolas, monospace;
+      font-size: 12px;
+      background: rgba(0,0,0,0.05);
+      padding: 1px 4px;
+      border-radius: 2px;
+      color: #1a1a1a;
+    }
+
+    .page-inner pre {
+      background: #f8f6f2;
+      padding: 10px;
+      border-radius: 3px;
+      overflow-x: auto;
+      margin: 10px 0;
+      font-size: 11px;
+      border: 1px solid #e8e4dc;
+    }
+
+    .page-inner pre code { background: none; padding: 0; color: #1a1a1a; }
+
+    .page-inner hr {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #aaa, transparent);
+      margin: 16px auto;
+      width: 35%;
+    }
+
+    .page-inner a {
+      color: #8b4513;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(139,69,19,0.3);
+    }
+
+    .page-inner a:hover {
+      border-bottom-color: #8b4513;
+    }
+
+    /* Page numbers */
+    .page-num {
+      position: absolute;
+      bottom: 18px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      color: #888;
+      font-weight: 400;
+    }
+
+    .page-left .page-num { left: 48px; }
+    .page-right .page-num { right: 48px; }
+
+    /* ============ FLIP PAGES ============ */
+    .flip-page {
+      position: absolute;
+      top: 0;
+      width: 50%;
+      height: 100%;
+      transform-style: preserve-3d;
+      z-index: 100;
+      display: none;
+      pointer-events: none;
+    }
+
+    .flip-right {
+      left: 50%;
+      transform-origin: left center;
+    }
+
+    .flip-left {
+      left: 0;
+      transform-origin: right center;
+    }
+
+    .flip-front, .flip-back {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+      backface-visibility: hidden;
+      overflow: hidden;
+    }
+
+    .flip-front { border-radius: 0 4px 4px 0; }
+    .flip-back {
+      border-radius: 4px 0 0 4px;
+      transform: rotateY(180deg);
+    }
+
+    .flip-left .flip-front { border-radius: 4px 0 0 4px; }
+    .flip-left .flip-back { border-radius: 0 4px 4px 0; }
+
+    /* Flip shadow */
+    .flip-shadow {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      width: 120px;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 99;
+    }
+
+    .flip-shadow-r {
+      left: 50%;
+      background: linear-gradient(to right, rgba(0,0,0,0.15), transparent);
+    }
+
+    .flip-shadow-l {
+      right: 50%;
+      background: linear-gradient(to left, rgba(0,0,0,0.15), transparent);
+    }
+
+    /* ============ NAVIGATION ============ */
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      z-index: 200;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.15);
+    }
+
+    .nav-btn:active { transform: translateY(-50%) scale(0.95); }
+    .nav-btn:disabled { opacity: 0.15; cursor: not-allowed; }
+
+    .nav-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: rgba(255,255,255,0.7);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .nav-prev { left: 24px; }
+    .nav-next { right: 24px; }
+
+    /* Click zones */
+    .click-zone {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 20%;
+      cursor: pointer;
+      z-index: 50;
+    }
+
+    .click-left { left: 0; }
+    .click-right { right: 0; }
+
+    /* ============ TOP BAR ============ */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      z-index: 300;
+    }
+
+    .book-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 500;
+      font-style: italic;
+      color: rgba(255,255,255,0.85);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      padding: 8px 0;
+    }
+
+    .book-title::before {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,200,120,0.8), transparent);
+      transition: width 0.3s ease;
+    }
+
+    .book-title:hover {
+      color: rgba(255,200,120,1);
+    }
+
+    .book-title:hover::before {
+      width: 100%;
+    }
+
+    .book-title:active {
+      transform: scale(0.98);
+    }
+
+    .book-title .title-accent {
+      color: rgba(255,200,120,0.9);
+      font-weight: 600;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .ctrl-btn {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .ctrl-btn:hover {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.9);
+    }
+
+    .ctrl-btn.icon {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ctrl-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ============ BOOKMARK INDICATOR ============ */
+    .bookmark-indicator {
+      position: fixed;
+      top: 50%;
+      right: 8px;
+      transform: translateY(-50%);
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .reader.active .bookmark-indicator {
+      opacity: 1;
+    }
+
+    .bookmark-ribbon {
+      width: 20px;
+      height: 48px;
+      background: linear-gradient(180deg, rgba(255,200,120,0.9) 0%, rgba(255,160,80,0.95) 100%);
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .bookmark-ribbon::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .bookmark-ribbon:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255,200,120,0.4);
+    }
+
+    .bookmark-ribbon:hover::before {
+      opacity: 1;
+    }
+
+    .bookmark-ribbon.saving {
+      animation: bookmark-pulse 0.5s ease;
+    }
+
+    @keyframes bookmark-pulse {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    /* Tooltip for bookmark */
+    .bookmark-tooltip {
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-right: 10px;
+      padding: 6px 10px;
+      background: rgba(0,0,0,0.85);
+      border-radius: 4px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      color: rgba(255,255,255,0.9);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .bookmark-indicator:hover .bookmark-tooltip {
+      opacity: 1;
+    }
+
+    .bookmark-tooltip::after {
+      content: '';
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-left-color: rgba(0,0,0,0.85);
+    }
+
+    /* Reset button - appears on hover */
+    .bookmark-reset {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 16px;
+      height: 16px;
+      background: rgba(0,0,0,0.7);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 0.2s;
+    }
+
+    .bookmark-indicator:hover .bookmark-reset {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .bookmark-reset:hover {
+      background: rgba(180,60,60,0.9);
+    }
+
+    .bookmark-reset svg {
+      width: 8px;
+      height: 8px;
+      stroke: #fff;
+      stroke-width: 2.5;
+    }
+
+    /* Saved notification */
+    .save-notification {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      padding: 8px 16px;
+      background: rgba(0,0,0,0.8);
+      border-radius: 20px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: rgba(255,255,255,0.9);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 400;
+    }
+
+    .save-notification.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .save-notification span {
+      color: rgba(255,200,120,1);
+    }
+
+    /* ============ MODERN PAGE SCRUBBER ============ */
+    .scrubber-container {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 0 80px 24px;
+      z-index: 300;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+
+    .scrubber-container:hover {
+      opacity: 1;
+    }
+
+    .scrubber-wrapper {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* Page indicator tooltip */
+    .scrubber-tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 12px;
+      padding: 8px 16px;
+      background: rgba(0,0,0,0.9);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: #fff;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .scrubber-tooltip.visible {
+      opacity: 1;
+    }
+
+    .scrubber-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: rgba(0,0,0,0.9);
+    }
+
+    .scrubber-tooltip .page-num {
+      font-weight: 600;
+      color: rgba(255,200,120,1);
+    }
+
+    .scrubber-tooltip .chapter-name {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      margin-top: 4px;
+    }
+
+    /* Preview window */
+    .scrubber-preview {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%) scale(0.95);
+      margin-bottom: 60px;
+      width: 200px;
+      height: 130px;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .scrubber-preview.visible {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    .scrubber-preview-content {
+      transform: scale(0.25);
+      transform-origin: top left;
+      width: 400%;
+      height: 400%;
+      padding: 20px;
+      font-size: 14px;
+      overflow: hidden;
+    }
+
+    /* Track */
+    .scrubber-track {
+      position: relative;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      cursor: pointer;
+      overflow: visible;
+    }
+
+    .scrubber-track::before {
+      content: '';
+      position: absolute;
+      inset: -10px 0;
+    }
+
+    /* Progress fill */
+    .scrubber-progress {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: linear-gradient(90deg, rgba(255,200,120,0.8), rgba(255,180,100,0.9));
+      border-radius: 3px;
+      transition: width 0.1s ease-out;
+    }
+
+    /* Thumb */
+    .scrubber-thumb {
+      position: absolute;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 0 3px rgba(255,200,120,0.3);
+      cursor: grab;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .scrubber-thumb:hover {
+      transform: translate(-50%, -50%) scale(1.15);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 5px rgba(255,200,120,0.4);
+    }
+
+    .scrubber-thumb:active {
+      cursor: grabbing;
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    .scrubber-thumb::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      background: rgba(255,200,120,1);
+      border-radius: 50%;
+    }
+
+    /* Chapter markers */
+    .scrubber-markers {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .scrubber-marker {
+      position: absolute;
+      top: -4px;
+      width: 2px;
+      height: 14px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 1px;
+      transform: translateX(-50%);
+      pointer-events: auto;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .scrubber-marker:hover {
+      background: rgba(255,200,120,0.9);
+      height: 18px;
+      top: -6px;
+    }
+
+    .scrubber-marker.h1 {
+      height: 18px;
+      top: -6px;
+      background: rgba(255,200,120,0.7);
+    }
+
+    .scrubber-marker-label {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 8px;
+      padding: 4px 8px;
+      background: rgba(0,0,0,0.9);
+      border-radius: 4px;
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      color: #fff;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.15s;
+      pointer-events: none;
+    }
+
+    .scrubber-marker:hover .scrubber-marker-label {
+      opacity: 1;
+    }
+
+    /* Info display */
+    .scrubber-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .scrubber-current {
+      font-weight: 500;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .scrubber-current span {
+      color: rgba(255,200,120,0.9);
+      font-weight: 600;
+    }
+
+    .scrubber-chapter {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ============ ONBOARDING CTA ============ */
+    .onboarding-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
+      z-index: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.5s ease;
+    }
+
+    .onboarding-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .onboarding-card {
+      background: linear-gradient(145deg, #1a1816 0%, #0f0e0d 100%);
+      border: 1px solid rgba(255,200,120,0.15);
+      border-radius: 20px;
+      padding: 48px;
+      max-width: 480px;
+      width: 90%;
+      transform: translateY(30px) scale(0.95);
+      transition: transform 0.5s ease;
+      box-shadow:
+        0 30px 60px rgba(0,0,0,0.5),
+        0 0 100px rgba(255,200,120,0.05);
+    }
+
+    .onboarding-overlay.active .onboarding-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .onboarding-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .onboarding-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 500;
+      font-style: italic;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .onboarding-header h2 span {
+      color: rgba(255,200,120,1);
+    }
+
+    .onboarding-header p {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .onboarding-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .form-group {
+      flex: 1;
+    }
+
+    .form-group label {
+      display: block;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 8px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      color: #fff;
+      transition: all 0.2s;
+    }
+
+    .form-group input::placeholder {
+      color: rgba(255,255,255,0.3);
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: rgba(255,200,120,0.5);
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 0 20px rgba(255,200,120,0.1);
+    }
+
+    .intent-section label {
+      display: block;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 12px;
+    }
+
+    .intent-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .intent-chip {
+      padding: 12px 18px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .intent-chip:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+
+    .intent-chip.selected {
+      background: rgba(255,200,120,0.15);
+      border-color: rgba(255,200,120,0.5);
+      color: rgba(255,200,120,1);
+    }
+
+    .intent-chip .emoji {
+      margin-right: 6px;
+    }
+
+    .onboarding-submit {
+      margin-top: 12px;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, rgba(255,200,120,0.9) 0%, rgba(255,160,80,0.9) 100%);
+      border: none;
+      border-radius: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1816;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .onboarding-submit::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .onboarding-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(255,200,120,0.3);
+    }
+
+    .onboarding-submit:hover::before {
+      opacity: 1;
+    }
+
+    .onboarding-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .skip-link {
+      display: block;
+      text-align: center;
+      margin-top: 16px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .skip-link:hover {
+      color: rgba(255,255,255,0.6);
+    }
+
+    /* Welcome back personalized message */
+    .welcome-toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      padding: 12px 24px;
+      background: rgba(0,0,0,0.85);
+      border: 1px solid rgba(255,200,120,0.2);
+      border-radius: 50px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.9);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.4s ease;
+      z-index: 350;
+    }
+
+    .welcome-toast.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .welcome-toast span {
+      color: rgba(255,200,120,1);
+      font-weight: 500;
+    }
+
+    /* ============ TOC MODAL ============ */
+    .toc-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .toc-modal.active { display: flex; }
+
+    .toc-box {
+      background: #ffffff;
+      width: 420px;
+      max-width: 90vw;
+      max-height: 65vh;
+      border-radius: 12px;
+      padding: 32px;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .toc-box h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 700;
+      font-style: italic;
+      color: #000;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .toc-list { list-style: none; }
+
+    .toc-list li {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-family: 'Source Serif 4', serif;
+      font-size: 16px;
+      color: #111;
+      transition: all 0.15s;
+    }
+
+    .toc-list li:hover {
+      padding-left: 8px;
+      color: #a03820;
+    }
+
+    .toc-list li span {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: #555;
+      font-weight: 500;
+    }
+
+    .toc-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      font-size: 20px;
+      color: #999;
+      cursor: pointer;
+    }
+
+    .toc-close:hover { color: #333; }
+
+    .empty-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #ccc;
+      font-style: italic;
+      font-size: 14px;
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-height: 750px) {
+      .book { height: 85vh; }
+      .page-inner { padding: 36px 44px; }
+      .page-inner h1 { font-size: 24px; }
+      .page-inner p { font-size: 14px; }
+    }
+
+    @media (max-width: 900px) {
+      .book { width: 95vw; }
+      .page-inner { padding: 32px 36px; }
+      .nav-btn { width: 40px; height: 40px; }
+      .nav-prev { left: 12px; }
+      .nav-next { right: 12px; }
+    }
+
+    /* ============ MOBILE - NATIVE APP FEEL ============ */
+    @media (max-width: 768px) {
+      html, body {
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+      }
+
+      /* Full screen single page view */
+      .book-container {
+        perspective: none;
+      }
+
+      .book {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        transform: none;
+        border-radius: 0;
+      }
+
+      .spine { display: none; }
+
+      /* Single page mode - hide left page */
+      .page-left {
+        display: none;
+      }
+
+      .page-right {
+        width: 100%;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .page-right::before { display: none; }
+
+      .page-inner {
+        padding: 24px 20px;
+        padding-top: max(24px, env(safe-area-inset-top));
+        padding-bottom: 100px;
+      }
+
+      /* Mobile typography */
+      .page-inner h1 {
+        font-size: 22px;
+        margin-top: 16px;
+        margin-bottom: 10px;
+      }
+
+      .page-inner > h1:first-child {
+        margin-top: 20px;
+        padding-bottom: 10px;
+      }
+
+      .page-inner h2 { font-size: 18px; }
+      .page-inner h3 { font-size: 15px; }
+
+      .page-inner p {
+        font-size: 16px;
+        line-height: 1.75;
+        text-align: left;
+        hyphens: none;
+      }
+
+      .page-inner ul, .page-inner ol {
+        font-size: 15px;
+        margin-left: 16px;
+      }
+
+      .page-inner blockquote {
+        padding: 12px 14px;
+        font-size: 15px;
+      }
+
+      /* Hide page stack edges */
+      .page-left::before,
+      .page-right::before { display: none; }
+
+      /* Page number */
+      .page-num {
+        bottom: 80px;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+        font-size: 12px;
+        color: #666;
+      }
+
+      /* Hide desktop nav buttons */
+      .nav-btn { display: none; }
+
+      /* Full width touch zones */
+      .click-zone {
+        width: 35%;
+        z-index: 60;
+      }
+
+      .click-left {
+        left: 0;
+        background: linear-gradient(90deg, rgba(0,0,0,0.02), transparent);
+      }
+
+      .click-right {
+        right: 0;
+        background: linear-gradient(-90deg, rgba(0,0,0,0.02), transparent);
+      }
+
+      /* Top bar - minimal */
+      .top-bar {
+        padding: 12px 16px;
+        padding-top: max(12px, env(safe-area-inset-top));
+        background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, transparent 100%);
+        transition: opacity 0.3s, transform 0.3s;
+      }
+
+      .top-bar.hidden {
+        opacity: 0;
+        transform: translateY(-100%);
+        pointer-events: none;
+      }
+
+      .book-title {
+        font-size: 15px;
+        padding: 6px 0;
+      }
+
+      .ctrl-btn {
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+
+      .ctrl-btn.icon {
+        width: 36px;
+        height: 36px;
+      }
+
+      /* Bookmark indicator */
+      .bookmark-indicator {
+        top: auto;
+        bottom: 140px;
+        right: 12px;
+      }
+
+      .bookmark-ribbon {
+        width: 16px;
+        height: 36px;
+      }
+
+      /* Mobile scrubber - bottom sheet style */
+      .scrubber-container {
+        padding: 0;
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 70%, transparent 100%);
+        transition: opacity 0.3s, transform 0.3s;
+      }
+
+      .scrubber-container.hidden {
+        opacity: 0;
+        transform: translateY(100%);
+        pointer-events: none;
+      }
+
+      .scrubber-wrapper {
+        padding: 16px 20px;
+        max-width: 100%;
+      }
+
+      .scrubber-track {
+        height: 8px;
+        border-radius: 4px;
+      }
+
+      .scrubber-thumb {
+        width: 24px;
+        height: 24px;
+      }
+
+      .scrubber-thumb::after {
+        inset: 6px;
+      }
+
+      .scrubber-marker {
+        height: 16px;
+        top: -4px;
+      }
+
+      .scrubber-info {
+        margin-top: 12px;
+        font-size: 12px;
+      }
+
+      .scrubber-preview {
+        display: none;
+      }
+
+      .scrubber-tooltip {
+        font-size: 12px;
+        padding: 6px 12px;
+      }
+
+      /* Onboarding mobile */
+      .onboarding-card {
+        max-width: 100%;
+        width: 100%;
+        border-radius: 20px 20px 0 0;
+        padding: 32px 24px;
+        padding-bottom: max(32px, env(safe-area-inset-bottom));
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 85vh;
+        overflow-y: auto;
+        transform: translateY(100%);
+      }
+
+      .onboarding-overlay.active .onboarding-card {
+        transform: translateY(0);
+      }
+
+      .onboarding-header h2 {
+        font-size: 24px;
+      }
+
+      .form-row {
+        flex-direction: column;
+      }
+
+      .form-group input {
+        padding: 16px;
+        font-size: 16px; /* Prevents zoom on iOS */
+      }
+
+      .intent-chip {
+        padding: 14px 16px;
+        font-size: 14px;
+      }
+
+      .onboarding-submit {
+        padding: 18px 32px;
+        font-size: 16px;
+        width: 100%;
+      }
+
+      /* TOC mobile */
+      .toc-box {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 20px 20px 0 0;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 70vh;
+        padding-bottom: max(24px, env(safe-area-inset-bottom));
+      }
+
+      .toc-list li {
+        padding: 16px 0;
+        font-size: 17px;
+      }
+
+      /* Welcome toast */
+      .welcome-toast {
+        top: auto;
+        bottom: 100px;
+        left: 20px;
+        right: 20px;
+        transform: translateX(0) translateY(20px);
+        text-align: center;
+      }
+
+      .welcome-toast.show {
+        transform: translateX(0) translateY(0);
+      }
+
+      /* Save notification */
+      .save-notification {
+        bottom: 100px;
+      }
+
+      /* Start screen mobile */
+      .start-content h1 {
+        font-size: 28px;
+        padding: 0 20px;
+      }
+
+      .start-hint {
+        font-size: 13px;
+      }
+
+      /* Intro mobile */
+      .author-photo {
+        width: 200px;
+        height: 200px;
+      }
+
+      .intro-title {
+        font-size: clamp(32px, 10vw, 60px);
+      }
+
+      .intro-subtitle {
+        font-size: 11px;
+        padding: 0 20px;
+      }
+
+      /* Flip animations - simpler for mobile */
+      .flip-page { display: none !important; }
+      .flip-shadow { display: none !important; }
+    }
+
+    /* Extra small phones */
+    @media (max-width: 380px) {
+      .page-inner {
+        padding: 20px 16px;
+        padding-bottom: 90px;
+      }
+
+      .page-inner p {
+        font-size: 15px;
+      }
+
+      .page-inner h1 {
+        font-size: 20px;
+      }
+
+      .scrubber-wrapper {
+        padding: 14px 16px;
+      }
+    }
+
+    /* Landscape mobile */
+    @media (max-width: 900px) and (max-height: 500px) {
+      .page-inner {
+        padding: 16px 40px;
+        padding-bottom: 70px;
+      }
+
+      .scrubber-container {
+        padding-bottom: 8px;
+      }
+
+      .scrubber-wrapper {
+        padding: 10px 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="grain"></div>
+
+  <!-- Start Screen -->
+  <div class="start-screen" id="startScreen">
+    <div class="start-content">
+      <h1>The <span>Accidental</span> CTO</h1>
+      <p class="start-hint"><span></span>Click anywhere to begin</p>
+    </div>
+  </div>
+
+  <!-- Hollywood Intro -->
+  <div class="intro" id="intro">
+    <div class="cinema-bar cinema-bar-top"></div>
+    <div class="cinema-bar cinema-bar-bottom"></div>
+    <div class="ambient-glow" id="ambientGlow"></div>
+    <div class="light-rays" id="lightRays"></div>
+    <div class="particles" id="particles"></div>
+    <div class="lens-flare flare-1" id="flare1"></div>
+    <div class="lens-flare flare-2" id="flare2"></div>
+    <div class="lens-flare flare-3" id="flare3"></div>
+    <div class="flare-streak" id="flareStreak"></div>
+    <div class="vignette"></div>
+
+    <!-- Author Photo -->
+    <div class="author-photo-container" id="authorPhoto">
+      <div class="author-photo-ring-2"></div>
+      <div class="author-photo-ring"></div>
+      <img src="subhash.png" alt="Subhash" class="author-photo">
+    </div>
+
+    <div class="intro-content" id="introContent">
+      <p class="intro-presents" id="introPresents">A DUKAAN STORY</p>
+      <p class="intro-subtitle" id="introSubtitle">A Journey Through Startup Engineering</p>
+      <h1 class="intro-title" id="introTitle">
+        <span class="title-the">THE</span>
+        <span class="title-accidental">Accidental</span>
+        <span class="title-cto">CTO</span>
+      </h1>
+      <div class="intro-line" id="introLine"></div>
+      <p class="intro-author" id="introAuthor">By <span class="intro-author-name">Subhash Choudhary</span></p>
+    </div>
+  </div>
+  <input type="file" id="fileInput" accept=".md,.markdown,.txt" style="display:none">
+
+  <!-- Reader -->
+  <div class="reader" id="reader">
+    <div class="top-bar">
+      <span class="book-title" id="bookTitle" title="Go to first page">The <span class="title-accent">Accidental</span> CTO</span>
+      <div class="controls">
+        <button class="ctrl-btn icon" id="soundBtn" title="Sound">
+          <svg viewBox="0 0 24 24" id="soundIcon"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>
+        </button>
+        <button class="ctrl-btn" id="tocBtn">Contents</button>
+      </div>
+    </div>
+
+    <div class="book-container">
+      <div class="book" id="book">
+        <div class="spine"></div>
+        
+        <div class="page page-left" id="pageLeft">
+          <div class="page-inner" id="contentLeft"></div>
+          <div class="page-num" id="numLeft"></div>
+          <div class="click-zone click-left" id="clickLeft"></div>
+        </div>
+        
+        <div class="page page-right" id="pageRight">
+          <div class="page-inner" id="contentRight"></div>
+          <div class="page-num" id="numRight"></div>
+          <div class="click-zone click-right" id="clickRight"></div>
+        </div>
+
+        <div class="flip-page flip-right" id="flipRight">
+          <div class="flip-front" id="flipFrontR"></div>
+          <div class="flip-back" id="flipBackR"></div>
+        </div>
+        <div class="flip-page flip-left" id="flipLeft">
+          <div class="flip-front" id="flipFrontL"></div>
+          <div class="flip-back" id="flipBackL"></div>
+        </div>
+
+        <div class="flip-shadow flip-shadow-r" id="shadowR"></div>
+        <div class="flip-shadow flip-shadow-l" id="shadowL"></div>
+      </div>
+
+      <button class="nav-btn nav-prev" id="prevBtn"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <button class="nav-btn nav-next" id="nextBtn"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+
+    <!-- Bookmark Indicator -->
+    <div class="bookmark-indicator" id="bookmarkIndicator">
+      <div class="bookmark-tooltip" id="bookmarkTooltip">Page saved</div>
+      <div class="bookmark-reset" id="bookmarkReset" title="Start from beginning">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+      <div class="bookmark-ribbon" id="bookmarkRibbon"></div>
+    </div>
+
+    <!-- Save Notification -->
+    <div class="save-notification" id="saveNotification">Position saved at <span id="savedPage">page 1</span></div>
+
+    <!-- Modern Page Scrubber -->
+    <div class="scrubber-container" id="scrubberContainer">
+      <div class="scrubber-wrapper">
+        <div class="scrubber-preview" id="scrubberPreview">
+          <div class="scrubber-preview-content page-inner" id="scrubberPreviewContent"></div>
+        </div>
+        <div class="scrubber-tooltip" id="scrubberTooltip">
+          <div class="page-num" id="tooltipPage">Page 1</div>
+          <div class="chapter-name" id="tooltipChapter"></div>
+        </div>
+        <div class="scrubber-track" id="scrubberTrack">
+          <div class="scrubber-progress" id="scrubberProgress"></div>
+          <div class="scrubber-markers" id="scrubberMarkers"></div>
+          <div class="scrubber-thumb" id="scrubberThumb"></div>
+        </div>
+        <div class="scrubber-info">
+          <span class="scrubber-current" id="scrubberCurrent">Page <span>1</span> of <span>350</span></span>
+          <span class="scrubber-chapter" id="scrubberChapter">Chapter 1</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Onboarding CTA -->
+  <div class="onboarding-overlay" id="onboardingOverlay">
+    <div class="onboarding-card">
+      <div class="onboarding-header">
+        <h2>Welcome to <span>The Journey</span></h2>
+        <p>Quick intro so we can personalize your experience</p>
+      </div>
+      <form class="onboarding-form" id="onboardingForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name</label>
+            <input type="text" id="userName" placeholder="What should we call you?" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="userEmail" placeholder="your@email.com">
+        </div>
+        <div class="intent-section">
+          <label>What brings you here?</label>
+          <div class="intent-options" id="intentOptions">
+            <div class="intent-chip" data-intent="founder"><span class="emoji">🚀</span>Building a startup</div>
+            <div class="intent-chip" data-intent="leader"><span class="emoji">👥</span>Leading a team</div>
+            <div class="intent-chip" data-intent="learning"><span class="emoji">📚</span>Learning tech leadership</div>
+            <div class="intent-chip" data-intent="curious"><span class="emoji">✨</span>Just curious</div>
+          </div>
+        </div>
+        <button type="submit" class="onboarding-submit" id="onboardingSubmit">Start Reading</button>
+        <span class="skip-link" id="skipOnboarding">Skip for now</span>
+      </form>
+    </div>
+  </div>
+
+  <!-- Welcome Toast -->
+  <div class="welcome-toast" id="welcomeToast">Welcome back, <span id="welcomeName">Reader</span>!</div>
+
+  <!-- TOC -->
+  <div class="toc-modal" id="tocModal">
+    <div class="toc-box">
+      <button class="toc-close" id="tocClose">×</button>
+      <h2>Contents</h2>
+      <ul class="toc-list" id="tocList"></ul>
+    </div>
+  </div>
+
+  <script>
+    let pages = [], spread = 0, toc = [], flipping = false, sound = true, audio = null;
+    const STORAGE_KEY = 'accidental-cto-reading-position';
+    const USER_KEY = 'accidental-cto-user';
+    let saveTimeout = null;
+    let selectedIntent = null;
+
+    // Mobile detection and state
+    const isMobile = () => window.innerWidth <= 768;
+    let currentPage = 0; // For single-page mobile mode
+    let uiVisible = true;
+
+    const $ = id => document.getElementById(id);
+    const intro = $('intro'), fileInput = $('fileInput');
+    const reader = $('reader'), contentLeft = $('contentLeft'), contentRight = $('contentRight');
+    const numLeft = $('numLeft'), numRight = $('numRight'), pageInfo = $('pageInfo'), bookTitle = $('bookTitle');
+    const flipRight = $('flipRight'), flipLeft = $('flipLeft');
+    const flipFrontR = $('flipFrontR'), flipBackR = $('flipBackR'), flipFrontL = $('flipFrontL'), flipBackL = $('flipBackL');
+    const shadowR = $('shadowR'), shadowL = $('shadowL');
+    const prevBtn = $('prevBtn'), nextBtn = $('nextBtn');
+    const tocModal = $('tocModal'), tocList = $('tocList');
+    const soundBtn = $('soundBtn'), soundIcon = $('soundIcon');
+    const pageLeft = $('pageLeft'), pageRight = $('pageRight');
+
+    marked.setOptions({ breaks: true, gfm: true });
+
+    // Create floating particles with variety
+    function createParticles() {
+      const container = $('particles');
+      for (let i = 0; i < 80; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = Math.random() * 3 + 1;
+        p.style.width = size + 'px';
+        p.style.height = size + 'px';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.top = Math.random() * 100 + '%';
+        container.appendChild(p);
+
+        gsap.to(p, {
+          opacity: Math.random() * 0.6 + 0.2,
+          duration: Math.random() * 2 + 1,
+          delay: Math.random() * 3,
+          repeat: -1,
+          yoyo: true
+        });
+
+        gsap.to(p, {
+          y: -150 - Math.random() * 300,
+          x: (Math.random() - 0.5) * 150,
+          duration: Math.random() * 15 + 10,
+          repeat: -1,
+          ease: 'none'
+        });
+      }
+    }
+
+    // Create bokeh effects
+    function createBokeh() {
+      const intro = $('intro');
+      for (let i = 0; i < 12; i++) {
+        const b = document.createElement('div');
+        b.className = 'bokeh';
+        const size = Math.random() * 80 + 40;
+        b.style.width = size + 'px';
+        b.style.height = size + 'px';
+        b.style.left = Math.random() * 100 + '%';
+        b.style.top = Math.random() * 100 + '%';
+        b.style.filter = `blur(${Math.random() * 10 + 5}px)`;
+        intro.appendChild(b);
+
+        gsap.to(b, {
+          opacity: Math.random() * 0.3 + 0.1,
+          duration: Math.random() * 3 + 2,
+          delay: Math.random() * 2 + 1,
+          repeat: -1,
+          yoyo: true
+        });
+
+        gsap.to(b, {
+          x: (Math.random() - 0.5) * 100,
+          y: (Math.random() - 0.5) * 100,
+          duration: Math.random() * 20 + 15,
+          repeat: -1,
+          yoyo: true,
+          ease: 'sine.inOut'
+        });
+      }
+    }
+
+    // Cinematic intro sound - plays intro.wav using Web Audio API
+    let introAudioSource = null;
+    let introGainNode = null;
+
+    async function playIntroSound() {
+      if (!sound) return;
+      try {
+        const ctx = initAudio();
+        if (ctx.state === 'suspended') await ctx.resume();
+
+        // Fetch and decode the audio file
+        const response = await fetch('intro.wav');
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+
+        // Create source and gain nodes
+        introAudioSource = ctx.createBufferSource();
+        introAudioSource.buffer = audioBuffer;
+
+        introGainNode = ctx.createGain();
+        introGainNode.gain.value = 0.8;
+
+        introAudioSource.connect(introGainNode).connect(ctx.destination);
+        introAudioSource.start(0);
+
+        // Fade out at the end (around 13-15 seconds)
+        const now = ctx.currentTime;
+        introGainNode.gain.setValueAtTime(0.8, now + 13);
+        introGainNode.gain.linearRampToValueAtTime(0, now + 15);
+
+      } catch(e) {
+        console.warn('Could not play intro sound:', e);
+      }
+    }
+
+    function stopIntroSound() {
+      try {
+        if (introAudioSource) {
+          introAudioSource.stop();
+          introAudioSource = null;
+        }
+      } catch(e) {}
+    }
+
+    // Hollywood intro animation - 15 seconds total
+    function playIntro(onComplete) {
+      createParticles();
+      createBokeh();
+      playIntroSound();
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          stopIntroSound();
+          if (onComplete) onComplete();
+        }
+      });
+
+      // === ACT 1: Atmosphere builds (0-3s) ===
+      // Ambient glow emerges from darkness
+      tl.to('#ambientGlow', { opacity: 1, duration: 2.5, ease: 'power2.out' }, 0);
+
+      // Light rays slowly materialize
+      tl.to('#lightRays', { opacity: 1, duration: 4, ease: 'power2.out' }, 0.5);
+
+      // === ACT 2: Visual drama (2-6s) ===
+      // Lens flares cascade in
+      tl.to('#flare1', { opacity: 0.8, duration: 2.5, ease: 'power2.out' }, 2);
+      tl.to('#flare2', { opacity: 0.6, duration: 2, ease: 'power2.out' }, 2.5);
+      tl.to('#flare3', { opacity: 0.5, duration: 2, ease: 'power2.out' }, 3);
+
+      // Dramatic horizontal flare streak
+      tl.to('#flareStreak', { opacity: 0.8, duration: 0.4, ease: 'power3.out' }, 3.5);
+      tl.to('#flareStreak', { opacity: 0, duration: 0.8, ease: 'power2.in' }, 4.2);
+
+      // === ACT 3: The reveal (3-8s) ===
+      // Author photo emerges with dramatic scale
+      tl.fromTo('#authorPhoto',
+        { opacity: 0, scale: 0.7, y: 30 },
+        { opacity: 1, scale: 1, y: 0, duration: 2, ease: 'power3.out' }, 3);
+
+      // "A DUKAAN STORY" types in
+      tl.to('#introPresents', { opacity: 1, duration: 1.2, ease: 'power2.out' }, 5);
+
+      // === ACT 4: Title sequence (6-11s) ===
+      // Subtitle reveals
+      tl.to('#introSubtitle', { opacity: 1, y: 0, duration: 1, ease: 'power2.out' }, 6.5);
+
+      // "THE" appears
+      tl.fromTo('.title-the',
+        { opacity: 0, y: 40, letterSpacing: '0.5em' },
+        { opacity: 1, y: 0, letterSpacing: '0.3em', duration: 1, ease: 'power3.out' }, 7.2);
+
+      // "Accidental" - the hero word
+      tl.fromTo('.title-accidental',
+        { opacity: 0, y: 50, scale: 0.9 },
+        { opacity: 1, y: 0, scale: 1, duration: 1.5, ease: 'power3.out' }, 7.8);
+
+      // "CTO" punches in
+      tl.fromTo('.title-cto',
+        { opacity: 0, y: 60, scale: 0.85 },
+        { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: 'back.out(1.2)' }, 8.8);
+
+      // Make intro title container visible
+      tl.set('#introTitle', { opacity: 1 }, 7.2);
+
+      // === ACT 5: Closing (10-15s) ===
+      // Elegant line draws
+      tl.to('#introLine', { opacity: 1, scaleX: 1, duration: 1, ease: 'power2.out' }, 10);
+
+      // Author credit
+      tl.to('#introAuthor', { opacity: 1, duration: 1.2, ease: 'power2.out' }, 10.5);
+
+      // Hold - let it breathe
+      tl.to({}, { duration: 2.5 });
+
+      // === TRANSITION OUT ===
+      // Subtle zoom and fade
+      tl.to('#introContent', { scale: 1.08, duration: 2, ease: 'power2.in' }, '+=0');
+      tl.to('#authorPhoto', { scale: 1.15, opacity: 0, duration: 2, ease: 'power2.in' }, '<');
+      tl.to(['#flare1', '#flare2', '#flare3'], { opacity: 0, duration: 1.5 }, '<');
+      tl.to(intro, { opacity: 0, duration: 1.8, ease: 'power2.inOut' }, '<0.5');
+      tl.set(intro, { visibility: 'hidden' });
+    }
+
+    // Start screen and intro flow
+    const startScreen = $('startScreen');
+    let bookLoaded = false;
+    let bookContent = null;
+
+    // Pre-fetch book content on page load (silent)
+    async function prefetchBook() {
+      try {
+        const response = await fetch('CTO.md');
+        if (!response.ok) throw new Error('File not found');
+        bookContent = await response.text();
+        bookLoaded = true;
+      } catch (e) {
+        console.error('Failed to prefetch CTO.md:', e);
+      }
+    }
+
+    // Start the experience on click
+    async function startExperience() {
+      // Hide start screen
+      startScreen.classList.add('hidden');
+
+      // Initialize audio context (requires user interaction)
+      initAudio();
+
+      // Show intro
+      intro.classList.add('active');
+
+      // Parse book if loaded
+      if (bookLoaded && bookContent) {
+        parse(bookContent, 'CTO.md');
+      } else {
+        // Try to load now
+        try {
+          const response = await fetch('CTO.md');
+          if (!response.ok) throw new Error('File not found');
+          const md = await response.text();
+          parse(md, 'CTO.md');
+        } catch (e) {
+          console.error('Failed to load CTO.md:', e);
+          $('introTitle').innerHTML = '<span>Error</span><span>Loading Book</span>';
+          $('introSubtitle').textContent = 'CTO.md not found';
+          return;
+        }
+      }
+
+      // Play Hollywood intro with audio
+      playIntro(() => {
+        const userData = getUserData();
+        if (userData && userData.name) {
+          // Returning user - show welcome back and book
+          reader.classList.add('active');
+          showWelcomeBack(userData.name);
+        } else {
+          // New user - show onboarding
+          showOnboarding();
+        }
+      });
+    }
+
+    // Click to start
+    startScreen.addEventListener('click', startExperience);
+
+    // Also allow keyboard to start
+    document.addEventListener('keydown', (e) => {
+      if (!startScreen.classList.contains('hidden') && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        startExperience();
+      }
+    });
+
+    // Prefetch book on page load
+    window.addEventListener('DOMContentLoaded', prefetchBook);
+
+    // Audio
+    function initAudio() {
+      if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+      return audio;
+    }
+
+    function playFlip() {
+      if (!sound) return;
+      try {
+        const ctx = initAudio();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const duration = 0.45; // Match GSAP flip duration exactly
+
+        // Layer 1: Paper rustle/texture (filtered noise throughout)
+        const rustleLen = Math.floor(ctx.sampleRate * duration);
+        const rustleBuf = ctx.createBuffer(1, rustleLen, ctx.sampleRate);
+        const rustleData = rustleBuf.getChannelData(0);
+        for (let i = 0; i < rustleLen; i++) {
+          const t = i / rustleLen;
+          // Bell curve envelope peaking at 40% through flip
+          const env = Math.exp(-Math.pow((t - 0.4) * 3, 2));
+          // Crinkly texture with varying frequency
+          const crinkle = Math.sin(i * 0.1 + Math.sin(i * 0.02) * 5);
+          rustleData[i] = (Math.random() * 2 - 1) * env * 0.15 * (0.5 + crinkle * 0.5);
+        }
+        const rustleSrc = ctx.createBufferSource();
+        rustleSrc.buffer = rustleBuf;
+        const rustleFilter = ctx.createBiquadFilter();
+        rustleFilter.type = 'bandpass';
+        rustleFilter.frequency.value = 2500;
+        rustleFilter.Q.value = 0.8;
+        const rustleGain = ctx.createGain();
+        rustleGain.gain.value = 0.4;
+        rustleSrc.connect(rustleFilter).connect(rustleGain).connect(ctx.destination);
+        rustleSrc.start(now);
+
+        // Layer 2: Whoosh/air movement (low swept noise)
+        const whooshLen = Math.floor(ctx.sampleRate * duration);
+        const whooshBuf = ctx.createBuffer(1, whooshLen, ctx.sampleRate);
+        const whooshData = whooshBuf.getChannelData(0);
+        for (let i = 0; i < whooshLen; i++) {
+          const t = i / whooshLen;
+          // Peaks in middle of flip
+          const env = Math.sin(t * Math.PI) * Math.exp(-t * 0.5);
+          whooshData[i] = (Math.random() * 2 - 1) * env * 0.1;
+        }
+        const whooshSrc = ctx.createBufferSource();
+        whooshSrc.buffer = whooshBuf;
+        const whooshFilter = ctx.createBiquadFilter();
+        whooshFilter.type = 'lowpass';
+        whooshFilter.frequency.value = 800;
+        const whooshGain = ctx.createGain();
+        whooshGain.gain.value = 0.3;
+        whooshSrc.connect(whooshFilter).connect(whooshGain).connect(ctx.destination);
+        whooshSrc.start(now);
+
+        // Layer 3: Page landing thump at end
+        const thumpLen = Math.floor(ctx.sampleRate * 0.08);
+        const thumpBuf = ctx.createBuffer(1, thumpLen, ctx.sampleRate);
+        const thumpData = thumpBuf.getChannelData(0);
+        for (let i = 0; i < thumpLen; i++) {
+          const t = i / thumpLen;
+          const env = Math.exp(-t * 30);
+          thumpData[i] = (Math.random() * 2 - 1) * env * 0.25;
+        }
+        const thumpSrc = ctx.createBufferSource();
+        thumpSrc.buffer = thumpBuf;
+        const thumpFilter = ctx.createBiquadFilter();
+        thumpFilter.type = 'lowpass';
+        thumpFilter.frequency.value = 400;
+        const thumpGain = ctx.createGain();
+        thumpGain.gain.value = 0.5;
+        thumpSrc.connect(thumpFilter).connect(thumpGain).connect(ctx.destination);
+        // Start thump at 90% of flip (when page lands)
+        thumpSrc.start(now + duration * 0.9);
+
+        // Layer 4: High-freq paper snap at release
+        const snapLen = Math.floor(ctx.sampleRate * 0.03);
+        const snapBuf = ctx.createBuffer(1, snapLen, ctx.sampleRate);
+        const snapData = snapBuf.getChannelData(0);
+        for (let i = 0; i < snapLen; i++) {
+          const t = i / snapLen;
+          snapData[i] = (Math.random() * 2 - 1) * Math.exp(-t * 50) * 0.2;
+        }
+        const snapSrc = ctx.createBufferSource();
+        snapSrc.buffer = snapBuf;
+        const snapFilter = ctx.createBiquadFilter();
+        snapFilter.type = 'highpass';
+        snapFilter.frequency.value = 3000;
+        const snapGain = ctx.createGain();
+        snapGain.gain.value = 0.25;
+        snapSrc.connect(snapFilter).connect(snapGain).connect(ctx.destination);
+        snapSrc.start(now + 0.02); // Slight delay for lift-off
+
+      } catch(e) {}
+    }
+
+    soundBtn.onclick = () => {
+      sound = !sound;
+      soundIcon.innerHTML = sound
+        ? '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>'
+        : '<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+    };
+
+    // ============ LOCAL STORAGE - READING POSITION ============
+    const bookmarkRibbon = $('bookmarkRibbon');
+    const bookmarkReset = $('bookmarkReset');
+    const bookmarkTooltip = $('bookmarkTooltip');
+    const saveNotification = $('saveNotification');
+    const savedPageEl = $('savedPage');
+
+    function saveReadingPosition() {
+      if (!pages.length) return;
+
+      const data = {
+        spread: spread,
+        page: spread * 2 + 1,
+        totalPages: pages.length,
+        timestamp: Date.now()
+      };
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+        // Subtle visual feedback
+        bookmarkRibbon.classList.add('saving');
+        setTimeout(() => bookmarkRibbon.classList.remove('saving'), 500);
+
+        // Update tooltip
+        bookmarkTooltip.textContent = `Page ${data.page} saved`;
+      } catch (e) {
+        console.warn('Could not save reading position:', e);
+      }
+    }
+
+    function loadReadingPosition() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          return data;
+        }
+      } catch (e) {
+        console.warn('Could not load reading position:', e);
+      }
+      return null;
+    }
+
+    function resetReadingPosition() {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        spread = 0;
+        render();
+
+        // Show notification
+        savedPageEl.textContent = 'beginning';
+        saveNotification.classList.add('show');
+        setTimeout(() => saveNotification.classList.remove('show'), 2000);
+
+        bookmarkTooltip.textContent = 'Start fresh';
+      } catch (e) {
+        console.warn('Could not reset reading position:', e);
+      }
+    }
+
+    function showRestoredNotification(pageNum) {
+      savedPageEl.textContent = `page ${pageNum}`;
+      saveNotification.textContent = `Resumed from page ${pageNum}`;
+      saveNotification.classList.add('show');
+      setTimeout(() => {
+        saveNotification.classList.remove('show');
+        saveNotification.innerHTML = 'Position saved at <span id="savedPage">page 1</span>';
+      }, 2500);
+    }
+
+    // Debounced save - saves after user stops navigating
+    function debouncedSave() {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(saveReadingPosition, 800);
+    }
+
+    // Reset button click
+    bookmarkReset.onclick = (e) => {
+      e.stopPropagation();
+      resetReadingPosition();
+    };
+
+    // Clicking ribbon shows current saved position
+    bookmarkRibbon.onclick = () => {
+      const saved = loadReadingPosition();
+      if (saved) {
+        bookmarkTooltip.textContent = `Page ${saved.page} of ${saved.totalPages}`;
+      } else {
+        bookmarkTooltip.textContent = 'No bookmark yet';
+      }
+    };
+
+    // ============ ONBOARDING ============
+    const onboardingOverlay = $('onboardingOverlay');
+    const onboardingForm = $('onboardingForm');
+    const intentOptions = $('intentOptions');
+    const welcomeToast = $('welcomeToast');
+    const welcomeName = $('welcomeName');
+
+    function getUserData() {
+      try {
+        const data = localStorage.getItem(USER_KEY);
+        return data ? JSON.parse(data) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveUserData(name, email, intent) {
+      try {
+        const data = {
+          name: name,
+          email: email,
+          intent: intent,
+          createdAt: Date.now()
+        };
+        localStorage.setItem(USER_KEY, JSON.stringify(data));
+        return true;
+      } catch (e) {
+        console.warn('Could not save user data:', e);
+        return false;
+      }
+    }
+
+    function showOnboarding() {
+      onboardingOverlay.classList.add('active');
+      setTimeout(() => $('userName').focus(), 500);
+    }
+
+    function hideOnboarding() {
+      onboardingOverlay.classList.remove('active');
+      // Show the book after onboarding closes
+      setTimeout(() => {
+        reader.classList.add('active');
+      }, 300);
+    }
+
+    function showWelcomeBack(name) {
+      welcomeName.textContent = name;
+      setTimeout(() => {
+        welcomeToast.classList.add('show');
+        setTimeout(() => welcomeToast.classList.remove('show'), 3000);
+      }, 500);
+    }
+
+    // Intent chip selection
+    intentOptions.addEventListener('click', (e) => {
+      const chip = e.target.closest('.intent-chip');
+      if (!chip) return;
+
+      // Deselect all
+      intentOptions.querySelectorAll('.intent-chip').forEach(c => c.classList.remove('selected'));
+      // Select clicked
+      chip.classList.add('selected');
+      selectedIntent = chip.dataset.intent;
+    });
+
+    // Form submission
+    onboardingForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = $('userName').value.trim();
+      const email = $('userEmail').value.trim();
+
+      if (!name) return;
+
+      saveUserData(name, email, selectedIntent);
+      hideOnboarding();
+    });
+
+    // Skip onboarding
+    $('skipOnboarding').onclick = () => {
+      // Save minimal data so we don't ask again
+      saveUserData('Reader', '', 'skipped');
+      hideOnboarding();
+    };
+
+    function parse(md, fname) {
+      bookTitle.textContent = 'The Accidental CTO';
+
+      const html = marked.parse(md);
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+
+      // Get actual page dimensions from DOM
+      const actualPage = document.querySelector('.page-inner');
+      const pageRect = actualPage.getBoundingClientRect();
+      const pageStyles = getComputedStyle(actualPage);
+      const paddingTop = parseFloat(pageStyles.paddingTop);
+      const paddingBottom = parseFloat(pageStyles.paddingBottom);
+      const availableHeight = pageRect.height - paddingTop - paddingBottom - 40; // 40px for page number
+
+      // Create hidden measurement container matching exact page styles
+      const measureBox = document.createElement('div');
+      measureBox.className = 'page-inner';
+      measureBox.style.cssText = `
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        width: ${pageRect.width}px;
+        padding: ${pageStyles.padding};
+        box-sizing: border-box;
+        visibility: hidden;
+      `;
+      document.body.appendChild(measureBox);
+
+      pages = []; toc = [];
+      let currentPage = document.createElement('div');
+      let currentHeight = 0;
+
+      // Helper to measure element height accurately
+      function measureElement(el) {
+        const clone = el.cloneNode(true);
+        measureBox.appendChild(clone);
+        const style = getComputedStyle(clone);
+        const height = clone.offsetHeight + parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+        measureBox.removeChild(clone);
+        return height;
+      }
+
+      // Helper to finalize current page
+      function finalizePage() {
+        if (currentPage.children.length > 0) {
+          pages.push(currentPage.innerHTML);
+          currentPage = document.createElement('div');
+          currentHeight = 0;
+        }
+      }
+
+      // Process each element
+      const elements = Array.from(tmp.children);
+
+      for (let i = 0; i < elements.length; i++) {
+        const el = elements[i];
+        const clone = el.cloneNode(true);
+        const tag = el.tagName;
+
+        // Skip empty elements
+        if (!el.textContent.trim() && !el.querySelector('img')) continue;
+
+        // Track TOC entries
+        if (tag === 'H1' || tag === 'H2') {
+          toc.push({
+            title: el.textContent.trim(),
+            level: tag === 'H1' ? 1 : 2,
+            page: pages.length + 1
+          });
+        }
+
+        // Measure this element
+        const elHeight = measureElement(el);
+
+        // Chapter headings - always start new page
+        if (tag === 'H1' && currentHeight > 0) {
+          finalizePage();
+        }
+        // H2 headings - start new page if past 50%
+        else if (tag === 'H2' && currentHeight > availableHeight * 0.5) {
+          finalizePage();
+        }
+
+        // Would this element overflow?
+        if (currentHeight + elHeight > availableHeight) {
+          finalizePage();
+        }
+
+        // Add element to current page
+        currentPage.appendChild(clone.cloneNode(true));
+        currentHeight += elHeight;
+
+        // If heading, ensure at least one following element stays with it
+        if ((tag === 'H1' || tag === 'H2' || tag === 'H3') && i + 1 < elements.length) {
+          const nextEl = elements[i + 1];
+          const nextHeight = measureElement(nextEl);
+
+          // If heading alone at bottom with no room for next element
+          if (currentHeight + nextHeight > availableHeight && currentPage.children.length === 1) {
+            // This is fine, heading starts the page
+          } else if (currentHeight + nextHeight > availableHeight && currentPage.children.length > 1) {
+            // Move heading to next page
+            currentPage.removeChild(currentPage.lastChild);
+            currentHeight -= elHeight;
+            finalizePage();
+            currentPage.appendChild(clone.cloneNode(true));
+            currentHeight = elHeight;
+          }
+        }
+      }
+
+      // Finalize last page
+      finalizePage();
+
+      // Cleanup
+      document.body.removeChild(measureBox);
+
+      if (!pages.length) pages.push('<p class="empty-page">Empty document.</p>');
+      if (pages.length % 2 === 1) pages.push('');
+
+      buildTOC();
+
+      // Restore saved reading position or start at beginning
+      const saved = loadReadingPosition();
+      if (saved && saved.spread !== undefined) {
+        const maxSpread = Math.ceil(pages.length / 2) - 1;
+        spread = Math.min(saved.spread, maxSpread);
+        // Show restored notification after intro completes
+        setTimeout(() => {
+          if (spread > 0) {
+            showRestoredNotification(saved.page);
+          }
+        }, 16000); // After 15s intro + 1s buffer
+      } else {
+        spread = 0;
+      }
+      render();
+    }
+
+    function buildTOC() {
+      tocList.innerHTML = '';
+      toc.forEach(item => {
+        const li = document.createElement('li');
+        li.style.paddingLeft = item.level === 2 ? '12px' : '0';
+        li.innerHTML = `${item.title} <span>${item.page}</span>`;
+        li.onclick = () => { spread = Math.floor((item.page - 1) / 2); render(); closeTOC(); };
+        tocList.appendChild(li);
+      });
+      // Build scrubber markers after TOC
+      buildScrubberMarkers();
+    }
+
+    function render() {
+      if (isMobile()) {
+        // Mobile: Single page mode
+        contentRight.innerHTML = pages[currentPage] || '<div class="empty-page"></div>';
+        numRight.textContent = pages[currentPage] ? currentPage + 1 : '';
+        // Update spread for scrubber compatibility
+        spread = Math.floor(currentPage / 2);
+      } else {
+        // Desktop: Two-page spread
+        const li = spread * 2, ri = li + 1;
+        contentLeft.innerHTML = pages[li] || '<div class="empty-page"></div>';
+        contentRight.innerHTML = pages[ri] || '<div class="empty-page"></div>';
+        numLeft.textContent = pages[li] ? li + 1 : '';
+        numRight.textContent = pages[ri] ? ri + 1 : '';
+        currentPage = spread * 2; // Sync for mode switching
+      }
+
+      const max = Math.ceil(pages.length / 2) - 1;
+      prevBtn.disabled = isMobile() ? currentPage === 0 : spread === 0;
+      nextBtn.disabled = isMobile() ? currentPage >= pages.length - 1 : spread >= max;
+      gsap.set([flipRight, flipLeft], { display: 'none', rotationY: 0 });
+      gsap.set([shadowR, shadowL], { opacity: 0 });
+      updateScrubber();
+      debouncedSave(); // Save position after each render
+    }
+
+    // ============ SCRUBBER FUNCTIONALITY ============
+    const scrubberTrack = $('scrubberTrack');
+    const scrubberProgress = $('scrubberProgress');
+    const scrubberThumb = $('scrubberThumb');
+    const scrubberMarkers = $('scrubberMarkers');
+    const scrubberTooltip = $('scrubberTooltip');
+    const scrubberPreview = $('scrubberPreview');
+    const scrubberPreviewContent = $('scrubberPreviewContent');
+    const tooltipPage = $('tooltipPage');
+    const tooltipChapter = $('tooltipChapter');
+    const scrubberCurrent = $('scrubberCurrent');
+    const scrubberChapter = $('scrubberChapter');
+
+    let isDragging = false;
+
+    function updateScrubber() {
+      if (!pages.length) return;
+      const pageNum = isMobile() ? currentPage : spread * 2;
+      const progress = (pageNum + 1) / pages.length;
+      const percent = Math.min(progress * 100, 100);
+      scrubberProgress.style.width = percent + '%';
+      scrubberThumb.style.left = percent + '%';
+
+      // Update current page display
+      const displayPage = pageNum + 1;
+      scrubberCurrent.innerHTML = `Page <span>${displayPage}</span> of <span>${pages.length}</span>`;
+
+      // Find current chapter
+      const currentChapter = toc.filter(t => t.page <= displayPage).pop();
+      scrubberChapter.textContent = currentChapter ? currentChapter.title : '';
+    }
+
+    function buildScrubberMarkers() {
+      scrubberMarkers.innerHTML = '';
+      if (!toc.length || !pages.length) return;
+
+      toc.forEach(item => {
+        const marker = document.createElement('div');
+        marker.className = 'scrubber-marker' + (item.level === 1 ? ' h1' : '');
+        marker.style.left = ((item.page - 1) / pages.length * 100) + '%';
+
+        const label = document.createElement('div');
+        label.className = 'scrubber-marker-label';
+        label.textContent = item.title.length > 25 ? item.title.slice(0, 25) + '...' : item.title;
+        marker.appendChild(label);
+
+        marker.onclick = (e) => {
+          e.stopPropagation();
+          spread = Math.floor((item.page - 1) / 2);
+          render();
+        };
+
+        scrubberMarkers.appendChild(marker);
+      });
+    }
+
+    function getPageFromPosition(clientX) {
+      const rect = scrubberTrack.getBoundingClientRect();
+      const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      return Math.floor(percent * pages.length);
+    }
+
+    function getChapterForPage(pageNum) {
+      return toc.filter(t => t.page <= pageNum + 1).pop();
+    }
+
+    function updateTooltip(clientX) {
+      const rect = scrubberTrack.getBoundingClientRect();
+      const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const pageNum = Math.floor(percent * pages.length);
+      const chapter = getChapterForPage(pageNum);
+
+      tooltipPage.textContent = `Page ${pageNum + 1}`;
+      tooltipChapter.textContent = chapter ? chapter.title : '';
+
+      scrubberTooltip.style.left = (percent * 100) + '%';
+      scrubberTooltip.classList.add('visible');
+
+      // Update preview
+      scrubberPreviewContent.innerHTML = pages[pageNum] || '';
+      scrubberPreview.style.left = (percent * 100) + '%';
+      scrubberPreview.classList.add('visible');
+    }
+
+    function hideTooltip() {
+      scrubberTooltip.classList.remove('visible');
+      scrubberPreview.classList.remove('visible');
+    }
+
+    function scrubTo(clientX) {
+      const pageNum = getPageFromPosition(clientX);
+      if (isMobile()) {
+        currentPage = pageNum;
+      } else {
+        spread = Math.floor(pageNum / 2);
+      }
+      render();
+    }
+
+    // Scrubber events
+    scrubberTrack.addEventListener('mouseenter', () => {
+      scrubberTooltip.classList.add('visible');
+    });
+
+    scrubberTrack.addEventListener('mouseleave', () => {
+      if (!isDragging) hideTooltip();
+    });
+
+    scrubberTrack.addEventListener('mousemove', (e) => {
+      updateTooltip(e.clientX);
+    });
+
+    scrubberTrack.addEventListener('click', (e) => {
+      scrubTo(e.clientX);
+    });
+
+    scrubberThumb.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      e.preventDefault();
+      document.body.style.cursor = 'grabbing';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        updateTooltip(e.clientX);
+        scrubTo(e.clientX);
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.cursor = '';
+        hideTooltip();
+      }
+    });
+
+    function flipNext() {
+      if (flipping) return;
+
+      // Mobile: single page navigation
+      if (isMobile()) {
+        if (currentPage >= pages.length - 1) return;
+        playFlip();
+        currentPage++;
+        render();
+        return;
+      }
+
+      // Desktop: spread navigation with animation
+      const max = Math.ceil(pages.length / 2) - 1;
+      if (spread >= max) return;
+      flipping = true;
+      playFlip();
+
+      const nextL = (spread + 1) * 2, nextR = nextL + 1;
+      flipFrontR.innerHTML = `<div class="page-inner">${contentRight.innerHTML}</div>`;
+      flipBackR.innerHTML = `<div class="page-inner">${pages[nextL] || ''}</div>`;
+
+      gsap.set(flipRight, { display: 'block', rotationY: 0 });
+      gsap.set(pageRight, { visibility: 'hidden' });
+      contentRight.innerHTML = pages[nextR] || '<div class="empty-page"></div>';
+      numRight.textContent = pages[nextR] ? nextR + 1 : '';
+
+      gsap.to(flipRight, {
+        rotationY: -180, duration: 0.45, ease: 'power2.inOut',
+        onComplete: () => { spread++; render(); gsap.set(pageRight, { visibility: 'visible' }); flipping = false; }
+      });
+      gsap.fromTo(shadowR, { opacity: 0 }, { opacity: 1, duration: 0.15 });
+      gsap.to(shadowR, { opacity: 0, duration: 0.15, delay: 0.3 });
+    }
+
+    function flipPrev() {
+      // Mobile: single page navigation
+      if (isMobile()) {
+        if (currentPage <= 0) return;
+        playFlip();
+        currentPage--;
+        render();
+        return;
+      }
+
+      // Desktop: spread navigation with animation
+      if (flipping || spread <= 0) return;
+      flipping = true;
+      playFlip();
+
+      const prevL = (spread - 1) * 2, prevR = prevL + 1;
+      flipFrontL.innerHTML = `<div class="page-inner">${contentLeft.innerHTML}</div>`;
+      flipBackL.innerHTML = `<div class="page-inner">${pages[prevR] || ''}</div>`;
+
+      gsap.set(flipLeft, { display: 'block', rotationY: 0 });
+      gsap.set(pageLeft, { visibility: 'hidden' });
+      contentLeft.innerHTML = pages[prevL] || '<div class="empty-page"></div>';
+      numLeft.textContent = pages[prevL] ? prevL + 1 : '';
+
+      gsap.to(flipLeft, {
+        rotationY: 180, duration: 0.45, ease: 'power2.inOut',
+        onComplete: () => { spread--; render(); gsap.set(pageLeft, { visibility: 'visible' }); flipping = false; }
+      });
+      gsap.fromTo(shadowL, { opacity: 0 }, { opacity: 1, duration: 0.15 });
+      gsap.to(shadowL, { opacity: 0, duration: 0.15, delay: 0.3 });
+    }
+
+    // ============ MOBILE UI TOGGLE ============
+    function toggleUI() {
+      if (!isMobile()) return;
+      uiVisible = !uiVisible;
+      const topBar = document.querySelector('.top-bar');
+      const scrubber = $('scrubberContainer');
+      const bookmark = $('bookmarkIndicator');
+
+      if (uiVisible) {
+        topBar.classList.remove('hidden');
+        scrubber.classList.remove('hidden');
+        if (bookmark) bookmark.style.opacity = '1';
+      } else {
+        topBar.classList.add('hidden');
+        scrubber.classList.add('hidden');
+        if (bookmark) bookmark.style.opacity = '0';
+      }
+    }
+
+    // Tap center of page to toggle UI on mobile
+    pageRight.addEventListener('click', (e) => {
+      if (!isMobile()) return;
+      const rect = pageRight.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const width = rect.width;
+
+      // Middle 30% toggles UI
+      if (x > width * 0.35 && x < width * 0.65) {
+        toggleUI();
+      }
+    });
+
+    function openTOC() { tocModal.classList.add('active'); }
+    function closeTOC() { tocModal.classList.remove('active'); }
+
+    prevBtn.onclick = flipPrev;
+    nextBtn.onclick = flipNext;
+    $('clickLeft').onclick = flipPrev;
+    $('clickRight').onclick = flipNext;
+    $('tocBtn').onclick = openTOC;
+    $('tocClose').onclick = closeTOC;
+
+    // Logo click - go to first page
+    bookTitle.onclick = () => {
+      if (spread !== 0) {
+        spread = 0;
+        render();
+      }
+    };
+    tocModal.onclick = e => { if (e.target === tocModal) closeTOC(); };
+
+    document.onkeydown = e => {
+      if (!reader.classList.contains('active')) return;
+      if (tocModal.classList.contains('active')) { if (e.key === 'Escape') closeTOC(); return; }
+      if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); flipNext(); }
+      else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); flipPrev(); }
+    };
+
+    // ============ TOUCH HANDLING ============
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+
+    document.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+      touchStartTime = Date.now();
+    }, { passive: true });
+
+    document.addEventListener('touchend', e => {
+      if (!reader.classList.contains('active') || tocModal.classList.contains('active') || onboardingOverlay.classList.contains('active')) return;
+
+      const touchEndX = e.changedTouches[0].screenX;
+      const touchEndY = e.changedTouches[0].screenY;
+      const deltaX = touchStartX - touchEndX;
+      const deltaY = touchStartY - touchEndY;
+      const touchDuration = Date.now() - touchStartTime;
+
+      // Only register as swipe if horizontal movement > vertical and > threshold
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
+        // Quick swipe = page turn
+        if (touchDuration < 300 || Math.abs(deltaX) > 80) {
+          if (deltaX > 0) {
+            flipNext();
+          } else {
+            flipPrev();
+          }
+        }
+      }
+    }, { passive: true });
+
+    // Touch support for scrubber
+    scrubberTrack.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      const touch = e.touches[0];
+      updateTooltip(touch.clientX);
+      scrubTo(touch.clientX);
+    }, { passive: true });
+
+    scrubberTrack.addEventListener('touchmove', (e) => {
+      if (isDragging) {
+        const touch = e.touches[0];
+        updateTooltip(touch.clientX);
+        scrubTo(touch.clientX);
+      }
+    }, { passive: true });
+
+    scrubberTrack.addEventListener('touchend', () => {
+      isDragging = false;
+      hideTooltip();
+    }, { passive: true });
+
+    // Handle orientation change
+    window.addEventListener('resize', () => {
+      // Re-render on resize to handle mode switch
+      if (pages.length) {
+        render();
+      }
+    });
+
+    // Restore mobile page position
+    function restoreMobilePosition() {
+      const saved = loadReadingPosition();
+      if (saved && saved.spread !== undefined) {
+        currentPage = saved.spread * 2;
+        if (currentPage >= pages.length) currentPage = pages.length - 1;
+      }
+    }
+  </script>
+</body>
+</html>
