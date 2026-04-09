@@ -167,9 +167,10 @@ export function ThreeBackground() {
       <Canvas
         camera={{ position: [0, 0, 5], fov: 60 }}
         gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
-        style={{ background: "transparent" }}
+        style={{ background: "transparent", pointerEvents: "none", touchAction: "none" }}
         dpr={[1, 1.5]}
         frameloop={paused ? "never" : "always"}
+        events={() => ({ enabled: false, priority: 0, compute: () => {}, connected: undefined } as any)}
       >
         <ambientLight intensity={0.5} />
         <FloatingParticles count={100} paused={paused} />
