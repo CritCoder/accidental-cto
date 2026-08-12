@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "critcoder-skills": {
+      "source": {
+        "source": "github",
+        "repo": "CritCoder/critcoder-skills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "critcoder-skills@critcoder-skills": true
+  }
+}
