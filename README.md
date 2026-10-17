@@ -1,6 +1,6 @@
 # The Accidental CTO
 
-The full book is in [`CTO.md`](CTO.md). Read it online at [the-cto.vercel.app](https://the-cto.vercel.app).
+The full book is in [`CTO.md`](CTO.md). Read it online at [accidentalcto.com](https://accidentalcto.com).
 
 ## Comic
 
